@@ -17,7 +17,7 @@ const SummarizeWebPageInputSchema = z.object({
 export type SummarizeWebPageInput = z.infer<typeof SummarizeWebPageInputSchema>;
 
 const SummarizeWebPageOutputSchema = z.object({
-  summary: z.string().describe('The summary of the webpage.'),
+  summary: z.string().describe('The summary of the webpage in Markdown format.'),
 });
 export type SummarizeWebPageOutput = z.infer<typeof SummarizeWebPageOutputSchema>;
 
@@ -29,10 +29,19 @@ const summarizeWebPagePrompt = ai.definePrompt({
   name: 'summarizeWebPagePrompt',
   input: {schema: SummarizeWebPageInputSchema},
   output: {schema: SummarizeWebPageOutputSchema},
-  prompt: `Summarize this web page clearly. First, give me the core message in 2–3 sentences. Then provide a detailed breakdown of key points in bullet form. Finally, list specific actionable tasks the viewer can implement right away based on the page’s advice.
+  prompt: `Summarize this web page clearly using Markdown for formatting.
 
-  Web Page URL: {{{url}}}
-  Summary:`,
+# Core Message
+(Provide the core message in 2-3 sentences)
+
+## Key Points
+- (Provide a detailed breakdown of key points in a bulleted list)
+
+## Actionable Tasks
+- (List specific, actionable tasks the viewer can implement right away based on the page's advice)
+
+Web Page URL: {{{url}}}
+`,
 });
 
 const summarizeWebPageFlow = ai.defineFlow(

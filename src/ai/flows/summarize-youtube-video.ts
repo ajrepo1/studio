@@ -17,7 +17,7 @@ const SummarizeYouTubeVideoInputSchema = z.object({
 export type SummarizeYouTubeVideoInput = z.infer<typeof SummarizeYouTubeVideoInputSchema>;
 
 const SummarizeYouTubeVideoOutputSchema = z.object({
-  summary: z.string().describe('The summary of the YouTube video.'),
+  summary: z.string().describe('The summary of the YouTube video in Markdown format.'),
 });
 export type SummarizeYouTubeVideoOutput = z.infer<typeof SummarizeYouTubeVideoOutputSchema>;
 
@@ -29,11 +29,20 @@ const prompt = ai.definePrompt({
   name: 'summarizeYouTubeVideoPrompt',
   input: {schema: SummarizeYouTubeVideoInputSchema},
   output: {schema: SummarizeYouTubeVideoOutputSchema},
-  prompt: `Summarize this YouTube video clearly. First, give me the core message in 2–3 sentences. Then provide a detailed breakdown of key points in bullet form. Finally, list specific actionable tasks the viewer can implement right away based on the video’s advice.
+  prompt: `Summarize this YouTube video clearly using Markdown for formatting.
 
-  Video URL: {{{videoUrl}}}
-  Summary Length: {{{length}}}
-  Summary:`,
+# Core Message
+(Provide the core message in 2-3 sentences)
+
+## Key Points
+- (Provide a detailed breakdown of key points in a bulleted list)
+
+## Actionable Tasks
+- (List specific, actionable tasks the viewer can implement right away based on the video’s advice)
+
+Video URL: {{{videoUrl}}}
+Summary Length: {{{length}}}
+`,
 });
 
 const summarizeYouTubeVideoFlow = ai.defineFlow(

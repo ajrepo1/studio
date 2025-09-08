@@ -6,6 +6,7 @@ import { AlertTriangle, Loader2, Youtube } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { marked } from 'marked';
 
 import { controlSummaryLength } from '@/ai/flows/control-summary-length';
 import { summarizeYouTubeVideo } from '@/ai/flows/summarize-youtube-video';
@@ -231,7 +232,10 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
                 <Skeleton className="h-4 w-[85%]" />
               </div>
             ) : (
-              <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">{summary}</p>
+              <div
+                className="prose prose-sm max-w-none text-foreground/90"
+                dangerouslySetInnerHTML={{ __html: marked(summary) }}
+              />
             )}
             <Separator />
             <div className="flex flex-wrap items-center gap-2">
