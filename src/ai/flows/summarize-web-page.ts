@@ -29,7 +29,10 @@ const summarizeWebPagePrompt = ai.definePrompt({
   name: 'summarizeWebPagePrompt',
   input: {schema: SummarizeWebPageInputSchema},
   output: {schema: SummarizeWebPageOutputSchema},
-  prompt: `Summarize the content of the webpage at the following URL:\n\n{{{url}}}`,
+  prompt: `Summarize this web page clearly. First, give me the core message in 2–3 sentences. Then provide a detailed breakdown of key points in bullet form. Finally, list specific actionable tasks the viewer can implement right away based on the page’s advice.
+
+  Web Page URL: {{{url}}}
+  Summary:`,
 });
 
 const summarizeWebPageFlow = ai.defineFlow(
