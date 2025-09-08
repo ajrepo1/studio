@@ -29,13 +29,11 @@ const prompt = ai.definePrompt({
   name: 'summarizeYouTubeVideoPrompt',
   input: {schema: SummarizeYouTubeVideoInputSchema},
   output: {schema: SummarizeYouTubeVideoOutputSchema},
-  prompt: `You are an expert summarizer of YouTube videos.  Your goal is to provide a concise and accurate summary of the video content.
-
-  The user will provide the URL of the video, and the desired length of the summary (short, medium, or long).  You must return a summary of the requested length.
+  prompt: `Summarize this YouTube video clearly. First, give me the core message in 2–3 sentences. Then provide a detailed breakdown of key points in bullet form. Finally, list specific actionable tasks the viewer can implement right away based on the video’s advice.
 
   Video URL: {{{videoUrl}}}
   Summary Length: {{{length}}}
-  Summary:`, // Removed Handlebars await keyword and replaced with tool.
+  Summary:`,
 });
 
 const summarizeYouTubeVideoFlow = ai.defineFlow(
