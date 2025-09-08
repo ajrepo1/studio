@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { controlSummaryLength } from '@/ai/flows/control-summary-length';
 import { summarizeYouTubeVideo } from '@/ai/flows/summarize-youtube-video';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -37,8 +39,10 @@ const FormSchema = z.object({
 type Length = z.infer<typeof FormSchema>['length'];
 
 export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) {
+  const [originalText, setOriginalText] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdjusting, setIsAdjusting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentLength, setCurrentLength] = useState<Length>('medium');
   const { toast } = useToast();
@@ -51,50 +55,89 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
     },
   });
 
-  const handleSummarize = useCallback(async (values: z.infer<typeof FormSchema>) => {
-    setIsLoading(true);
-    setError(null);
-    // Clear previous summary only if it's a new URL submission
-    if (form.formState.isSubmitting) {
+  const handleSummarize = useCallback(
+    async (values: z.infer<typeof FormSchema>) => {
+      setIsLoading(true);
+      setError(null);
       setSummary(null);
-    }
+      setOriginalText(null);
 
-    try {
-      const result = await summarizeYouTubeVideo(values);
-      setSummary(result.summary);
-      setCurrentLength(values.length);
-    } catch (e) {
-      console.error(e);
-      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError('Failed to summarize the video. Please check the URL and try again.');
-      setSummary(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [form.formState.isSubmitting]);
+      try {
+        const result = await summarizeYouTubeVideo(values);
+        // For youtube videos, the summary is the original text to use for adjustments
+        setOriginalText(result.summary);
+        setSummary(result.summary);
+        setCurrentLength(values.length);
+      } catch (e) {
+        console.error(e);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        setError('Failed to summarize the video. Please check the URL and try again.');
+        setSummary(null);
+        toast({
+          variant: 'destructive',
+          title: 'An error occurred',
+          description: errorMessage,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [toast]
+  );
 
-  const handleLengthChange = (newLength: Length) => {
-    const currentUrl = form.getValues('videoUrl');
-    if (form.getFieldState('videoUrl').invalid || !currentUrl) {
-      toast({
-        variant: 'destructive',
-        title: 'Missing URL',
-        description: 'Please enter a valid YouTube video URL first.',
-      });
-      form.trigger('videoUrl');
-      return;
-    }
-    form.setValue('length', newLength);
-    handleSummarize({ videoUrl: currentUrl, length: newLength });
-  };
-  
+  const handleLengthChange = useCallback(
+    async (newLength: Length) => {
+      const currentUrl = form.getValues('videoUrl');
+      if (form.getFieldState('videoUrl').invalid || !currentUrl) {
+        toast({
+          variant: 'destructive',
+          title: 'Missing URL',
+          description: 'Please enter a valid YouTube video URL first.',
+        });
+        form.trigger('videoUrl');
+        return;
+      }
+      if (!summary || !originalText) {
+        toast({
+          variant: 'destructive',
+          title: 'No summary available',
+          description: 'Please generate a summary first before changing its length.',
+        });
+        return;
+      }
+
+      setIsAdjusting(true);
+      setError(null);
+      try {
+        const result = await controlSummaryLength({
+          text: originalText,
+          summary: summary,
+          length: newLength,
+        });
+        setSummary(result.adjustedSummary);
+        setCurrentLength(newLength);
+      } catch (e) {
+        console.error(e);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        setError('Failed to adjust summary length. Please try again.');
+        toast({
+          variant: 'destructive',
+          title: 'An error occurred',
+          description: errorMessage,
+        });
+      } finally {
+        setIsAdjusting(false);
+      }
+    },
+    [form, summary, originalText, toast]
+  );
+
   useEffect(() => {
     if (initialUrl) {
       form.setValue('videoUrl', initialUrl);
       handleSummarize({ videoUrl: initialUrl, length: 'medium' });
     }
   }, [initialUrl, form, handleSummarize]);
-
 
   return (
     <div className="space-y-6">
@@ -145,7 +188,7 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
                 )}
               />
               <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading && !summary && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Summarize
               </Button>
             </form>
@@ -166,7 +209,7 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
         </Card>
       )}
 
-      {error && !isLoading && (
+      {error && !isLoading && !isAdjusting && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -181,7 +224,7 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
             <CardDescription>Adjust the length of the summary below.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {isLoading ? (
+            {isAdjusting ? (
               <div className="space-y-2">
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-full" />
@@ -199,9 +242,10 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
                   variant={currentLength === len ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleLengthChange(len)}
-                  disabled={isLoading}
+                  disabled={isAdjusting || isLoading}
                   className="bg-accent text-accent-foreground hover:bg-accent/90 data-[variant=default]:bg-primary data-[variant=default]:text-primary-foreground"
                 >
+                  {isAdjusting && currentLength === len ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {len.charAt(0).toUpperCase() + len.slice(1)}
                 </Button>
               ))}

@@ -1,15 +1,17 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle, Link, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { controlSummaryLength } from '@/ai/flows/control-summary-length';
 import { summarizeWebPage } from '@/ai/flows/summarize-web-page';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -19,6 +21,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,10 +29,15 @@ const FormSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid URL.' }),
 });
 
+type Length = 'short' | 'medium' | 'long';
+
 export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
+  const [originalText, setOriginalText] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdjusting, setIsAdjusting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentLength, setCurrentLength] = useState<Length>('medium');
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -39,33 +47,76 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
     },
   });
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
-    setIsLoading(true);
-    setSummary(null);
-    setError(null);
-    try {
-      const result = await summarizeWebPage({ url: data.url });
-      setSummary(result.summary);
-    } catch (e) {
-      console.error(e);
-      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError('Failed to summarize the web page. Please check the URL and try again.');
-      toast({
-        variant: 'destructive',
-        title: 'An error occurred',
-        description: errorMessage,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const handleSummarize = useCallback(
+    async (data: z.infer<typeof FormSchema>) => {
+      setIsLoading(true);
+      setSummary(null);
+      setOriginalText(null);
+      setError(null);
+      setCurrentLength('medium');
+      try {
+        const result = await summarizeWebPage({ url: data.url });
+        // For web pages, we'll use the summary itself as the "original text" for adjustments.
+        setOriginalText(result.summary);
+        setSummary(result.summary);
+      } catch (e) {
+        console.error(e);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        setError('Failed to summarize the web page. Please check the URL and try again.');
+        toast({
+          variant: 'destructive',
+          title: 'An error occurred',
+          description: errorMessage,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [toast]
+  );
+
+  const handleLengthChange = useCallback(
+    async (newLength: Length) => {
+      if (!summary || !originalText) {
+        toast({
+          variant: 'destructive',
+          title: 'No summary available',
+          description: 'Please generate a summary first before changing its length.',
+        });
+        return;
+      }
+      setIsAdjusting(true);
+      setError(null);
+      try {
+        const result = await controlSummaryLength({
+          text: originalText,
+          summary: summary,
+          length: newLength,
+        });
+        setSummary(result.adjustedSummary);
+        setCurrentLength(newLength);
+      } catch (e) {
+        console.error(e);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        setError('Failed to adjust summary length. Please try again.');
+        toast({
+          variant: 'destructive',
+          title: 'An error occurred',
+          description: errorMessage,
+        });
+      } finally {
+        setIsAdjusting(false);
+      }
+    },
+    [summary, originalText, toast]
+  );
 
   useEffect(() => {
     if (initialUrl) {
       form.setValue('url', initialUrl);
-      onSubmit({ url: initialUrl });
+      handleSummarize({ url: initialUrl });
     }
-  }, [initialUrl, form, onSubmit]);
+  }, [initialUrl, form, handleSummarize]);
 
   return (
     <div className="space-y-6">
@@ -76,7 +127,7 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(handleSummarize)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="url"
@@ -106,7 +157,7 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
         <Card>
           <CardHeader>
             <CardTitle>Generating Summary...</CardTitle>
-          </Header>
+          </CardHeader>
           <CardContent className="space-y-2">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />
@@ -127,9 +178,34 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
         <Card>
           <CardHeader>
             <CardTitle>Summary</CardTitle>
+            <CardDescription>Adjust the length of the summary below.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">{summary}</p>
+          <CardContent className="space-y-4">
+            {isAdjusting ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-[85%]" />
+              </div>
+            ) : (
+              <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">{summary}</p>
+            )}
+            <Separator />
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Length:</span>
+              {(['short', 'medium', 'long'] as const).map((len) => (
+                <Button
+                  key={len}
+                  variant={currentLength === len ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleLengthChange(len)}
+                  disabled={isAdjusting}
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 data-[variant=default]:bg-primary data-[variant=default]:text-primary-foreground"
+                >
+                  {len.charAt(0).toUpperCase() + len.slice(1)}
+                </Button>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
