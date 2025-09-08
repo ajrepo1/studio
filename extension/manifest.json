@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Summarist - One Click Summary",
+  "version": "1.0",
+  "description": "Summarize any web page with a single click.",
+  "permissions": [
+    "contextMenus",
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Summarize Page"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

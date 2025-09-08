@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle, Loader2, Youtube } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -36,7 +36,7 @@ const FormSchema = z.object({
 
 type Length = z.infer<typeof FormSchema>['length'];
 
-export function VideoSummarizer() {
+export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) {
   const [summary, setSummary] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,12 +46,12 @@ export function VideoSummarizer() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      videoUrl: '',
+      videoUrl: initialUrl || '',
       length: 'medium',
     },
   });
 
-  const handleSummarize = async (values: z.infer<typeof FormSchema>) => {
+  const handleSummarize = useCallback(async (values: z.infer<typeof FormSchema>) => {
     setIsLoading(true);
     setError(null);
     // Clear previous summary only if it's a new URL submission
@@ -67,16 +67,11 @@ export function VideoSummarizer() {
       console.error(e);
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
       setError('Failed to summarize the video. Please check the URL and try again.');
-      toast({
-        variant: 'destructive',
-        title: 'An error occurred',
-        description: errorMessage,
-      });
       setSummary(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [form.formState.isSubmitting]);
 
   const handleLengthChange = (newLength: Length) => {
     const currentUrl = form.getValues('videoUrl');
@@ -92,6 +87,14 @@ export function VideoSummarizer() {
     form.setValue('length', newLength);
     handleSummarize({ videoUrl: currentUrl, length: newLength });
   };
+  
+  useEffect(() => {
+    if (initialUrl) {
+      form.setValue('videoUrl', initialUrl);
+      handleSummarize({ videoUrl: initialUrl, length: 'medium' });
+    }
+  }, [initialUrl, form, handleSummarize]);
+
 
   return (
     <div className="space-y-6">

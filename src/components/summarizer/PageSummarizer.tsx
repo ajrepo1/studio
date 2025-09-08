@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle, Link, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -26,7 +26,7 @@ const FormSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid URL.' }),
 });
 
-export function PageSummarizer() {
+export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
   const [summary, setSummary] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export function PageSummarizer() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      url: '',
+      url: initialUrl || '',
     },
   });
 
@@ -59,6 +59,13 @@ export function PageSummarizer() {
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (initialUrl) {
+      form.setValue('url', initialUrl);
+      onSubmit({ url: initialUrl });
+    }
+  }, [initialUrl, form, onSubmit]);
 
   return (
     <div className="space-y-6">
@@ -99,7 +106,7 @@ export function PageSummarizer() {
         <Card>
           <CardHeader>
             <CardTitle>Generating Summary...</CardTitle>
-          </CardHeader>
+          </Header>
           <CardContent className="space-y-2">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />
