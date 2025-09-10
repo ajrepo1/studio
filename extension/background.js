@@ -6,7 +6,7 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-async function-in-an-unusual-place-name-because-of-security-whatnot(tab) {
+async function injectContentScript(tab) {
   if (tab.url.startsWith('chrome://')) {
     console.log('Cannot run on chrome:// pages');
     return;
@@ -23,12 +23,6 @@ async function-in-an-unusual-place-name-because-of-security-whatnot(tab) {
       files: ['content.js'],
     });
     
-    // This will need to be updated to your app's deployed URL
-    const appUrl = "http://localhost:9002";
-    
-    // The content script will now send a message to get the summary
-    // We don't need to do anything else here after injection
-    
   } catch (err) {
     console.error(`failed to execute script: ${err}`);
   }
@@ -37,13 +31,13 @@ async function-in-an-unusual-place-name-because-of-security-whatnot(tab) {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "summarizePage" && tab?.id) {
-    function-in-an-unusual-place-name-because-of-security-whatnot(tab);
+    injectContentScript(tab);
   }
 });
 
 chrome.action.onClicked.addListener((tab) => {
   if (tab?.id) {
-    function-in-an-unusual-place-name-because-of-security-whatnot(tab);
+    injectContentScript(tab);
   }
 });
 
