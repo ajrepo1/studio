@@ -9,7 +9,6 @@ import { z } from 'zod';
 import { marked } from 'marked';
 
 import { controlSummaryLength } from '@/ai/flows/control-summary-length';
-import { summarizeWebPage } from '@/ai/flows/summarize-web-page';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,8 +55,19 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
       setError(null);
       setCurrentLength('medium');
       try {
-        const result = await summarizeWebPage({ url: data.url });
-        // For web pages, we'll use the summary itself as the "original text" for adjustments.
+        // We can't get page content from a URL on the server side easily,
+        // so for the web UI, we will just use the URL. The extension sends text content.
+        const response = await fetch('/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: `Please summarize the content of the webpage at this URL: ${data.url}` }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.details || `HTTP error! status: ${response.status}`);
+        }
+        const result = await response.json();
+        
         setOriginalText(result.summary);
         setSummary(result.summary);
       } catch (e) {
