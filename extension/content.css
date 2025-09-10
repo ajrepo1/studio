@@ -1,0 +1,135 @@
+#summarist-modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #222;
+}
+
+#summarist-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+#summarist-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#summarist-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+#summarist-modal-header img {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+}
+
+#summarist-modal-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+}
+
+#summarist-close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  color: #888;
+  padding: 0 8px;
+}
+
+#summarist-modal-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+#summarist-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: #555;
+}
+
+.summarist-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: summarist-spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes summarist-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#summarist-summary-display h1,
+#summarist-summary-display h2,
+#summarist-summary-display h3 {
+  color: #111;
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+}
+
+#summarist-summary-display h1 {
+  font-size: 22px;
+}
+
+#summarist-summary-display h2 {
+  font-size: 20px;
+}
+
+#summarist-summary-display ul {
+  padding-left: 20px;
+  margin-top: 0.5em;
+  margin-bottom: 1em;
+}
+
+#summarist-summary-display li {
+  margin-bottom: 0.5em;
+}
+
+.summarist-error {
+    text-align: center;
+    padding: 20px;
+    background-color: #fff0f0;
+    color: #d8000c;
+    border-radius: 8px;
+    border: 1px solid #ffd2d2;
+}
