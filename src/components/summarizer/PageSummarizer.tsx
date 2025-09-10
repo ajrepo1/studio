@@ -79,7 +79,7 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
         console.error(e);
         let errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
         if (errorMessage.includes('API key not valid')) {
-          errorMessage = 'The provided GEMINI_API_KEY is invalid. Please check your key in the Google Cloud Console. If it works locally but not on Vercel, check for API key restrictions (like HTTP referrers) in your Google Cloud project settings.';
+          errorMessage = 'The provided GEMINI_API_KEY is invalid. Since it works locally, this is likely due to API key restrictions. Please go to your Google Cloud project, find your API key, and check the "Application restrictions" section. Either select "None" or add your Vercel URL (e.g., your-project.vercel.app/*) as an allowed "HTTP referrer".';
         } else if (errorMessage.includes('API_KEY')) {
           errorMessage = 'The GEMINI_API_KEY environment variable is not set on the server. Please add it to your Vercel project settings.';
         }
