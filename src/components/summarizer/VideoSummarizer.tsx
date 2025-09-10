@@ -72,7 +72,7 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
         console.error(e);
         let errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
         if (errorMessage.includes('API key not valid')) {
-          errorMessage = 'The provided GEMINI_API_KEY is invalid. Please check your key in the Google Cloud Console and update it in your Vercel project settings.';
+          errorMessage = 'The provided GEMINI_API_KEY is invalid. Please check your key in the Google Cloud Console. If it works locally but not on Vercel, check for API key restrictions (like HTTP referrers) in your Google Cloud project settings.';
         } else if (errorMessage.includes('API_KEY')) {
             errorMessage = 'The GEMINI_API_KEY environment variable is not set on the server. Please add it to your Vercel project settings.';
         } else {
@@ -182,7 +182,7 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a summary length" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="short">Short</SelectItem>
@@ -221,7 +221,7 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        </Aler
       )}
 
       {summary && (
