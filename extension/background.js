@@ -45,7 +45,7 @@ chrome.action.onClicked.addListener((tab) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "getSummary") {
-    const apiUrl = `http://localhost:9002/api/summarize`;
+    const apiUrl = `http://127.0.0.1:9002/api/summarize`;
     
     console.log(`Fetching summary from: ${apiUrl}`);
 
