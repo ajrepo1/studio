@@ -74,8 +74,10 @@ if (!document.getElementById('summarist-modal-container')) {
         .replace(/(\<li\>.*\<\/li\>)/gs, '<ul>$1</ul>');
         
       showSummary(htmlSummary);
+    } else if (response && response.error) {
+      showError(response.error);
     } else {
-       showError('Failed to get summary. The response was empty.');
+       showError('Failed to get summary. The response was empty or malformed.');
     }
   });
 
