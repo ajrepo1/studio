@@ -56,9 +56,10 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
       setError(null);
       setCurrentLength('medium');
       try {
-        const result = await summarizeText({ text: `Please summarize the content of the webpage at this URL: ${data.url}` });
+        // Use the summarizeText flow but instruct it to summarize the content AT the URL.
+        const result = await summarizeText({ text: `Please go to the URL ${data.url} and provide a summary of its content.` });
         
-        setOriginalText(result.summary);
+        setOriginalText(result.summary); // The initial summary is the "original text" for length adjustments
         setSummary(result.summary);
       } catch (e) {
         console.error(e);
