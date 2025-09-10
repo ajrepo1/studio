@@ -55,8 +55,6 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
       setError(null);
       setCurrentLength('medium');
       try {
-        // This is a simplified approach for demonstration.
-        // A robust solution would involve fetching the content of the URL on the server-side.
         const response = await fetch('/api/summarize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -78,7 +76,12 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
         setSummary(result.summary);
       } catch (e) {
         console.error(e);
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        let errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        if (errorMessage.includes('API key not valid')) {
+          errorMessage = 'The provided GEMINI_API_KEY is invalid. Please check your key in the Google Cloud Console and update it in your Vercel project settings.';
+        } else if (errorMessage.includes('API_KEY')) {
+          errorMessage = 'The GEMINI_API_KEY environment variable is not set on the server. Please add it to your Vercel project settings.';
+        }
         setError(`Failed to summarize the web page. ${errorMessage}`);
         toast({
           variant: 'destructive',

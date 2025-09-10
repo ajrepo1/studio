@@ -65,19 +65,20 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
 
       try {
         const result = await summarizeYouTubeVideo(values);
-        // For youtube videos, the summary is the original text to use for adjustments
         setOriginalText(result.summary);
         setSummary(result.summary);
         setCurrentLength(values.length);
       } catch (e) {
         console.error(e);
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-        // Check for specific API key error message from Genkit/server
-        if (errorMessage.includes('API key')) {
-            setError('The GEMINI_API_KEY environment variable is not set on the server.');
+        let errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        if (errorMessage.includes('API key not valid')) {
+          errorMessage = 'The provided GEMINI_API_KEY is invalid. Please check your key in the Google Cloud Console and update it in your Vercel project settings.';
+        } else if (errorMessage.includes('API_KEY')) {
+            errorMessage = 'The GEMINI_API_KEY environment variable is not set on the server. Please add it to your Vercel project settings.';
         } else {
-            setError('Failed to summarize the video. Please check the URL and try again.');
+            errorMessage = 'Failed to summarize the video. Please check the URL and try again.';
         }
+        setError(errorMessage);
         setSummary(null);
         toast({
           variant: 'destructive',
