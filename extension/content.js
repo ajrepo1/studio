@@ -57,7 +57,9 @@ if (!document.getElementById('summarist-modal-container')) {
 
   createModal();
 
-  chrome.runtime.sendMessage({ action: "getSummary", url: window.location.href }, (response) => {
+  const pageText = document.body.innerText;
+
+  chrome.runtime.sendMessage({ action: "getSummary", text: pageText }, (response) => {
     if (chrome.runtime.lastError) {
         console.error(chrome.runtime.lastError);
         showError('An error occurred while communicating with the extension.');

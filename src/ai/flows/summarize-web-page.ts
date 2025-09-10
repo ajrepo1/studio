@@ -1,4 +1,5 @@
-// Summarize the content of any webpage.
+// This file is no longer used for the extension, 
+// but is kept for potential other uses.
 'use server';
 /**
  * @fileOverview Summarizes the content of a webpage.

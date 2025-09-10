@@ -45,13 +45,17 @@ chrome.action.onClicked.addListener((tab) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "getSummary") {
-    // NOTE: In a production extension, you would replace this localhost URL
-    // with your deployed application's URL.
-    const apiUrl = `http://localhost:9002/api/summarize?url=${encodeURIComponent(request.url)}`;
+    const apiUrl = `http://localhost:9002/api/summarize`;
     
     console.log(`Fetching summary from: ${apiUrl}`);
 
-    fetch(apiUrl)
+    fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text: request.text }),
+    })
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -66,11 +70,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       })
       .catch(error => {
         console.error("Failed to fetch summary: ", error);
-        // Sending an object with an error property to the content script
         sendResponse({ error: `Failed to fetch summary: ${error.message}` });
       });
 
-    // Return true to indicate that you will be sending a response asynchronously.
     return true; 
   }
 });
