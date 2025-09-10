@@ -72,7 +72,12 @@ export function VideoSummarizer({ initialUrl }: { initialUrl?: string | null }) 
       } catch (e) {
         console.error(e);
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-        setError('Failed to summarize the video. Please check the URL and try again.');
+        // Check for specific API key error message from Genkit/server
+        if (errorMessage.includes('API key')) {
+            setError('The GEMINI_API_KEY environment variable is not set on the server.');
+        } else {
+            setError('Failed to summarize the video. Please check the URL and try again.');
+        }
         setSummary(null);
         toast({
           variant: 'destructive',
