@@ -9,7 +9,6 @@ import { z } from 'zod';
 import { marked } from 'marked';
 
 import { controlSummaryLength } from '@/ai/flows/control-summary-length';
-import { summarizeText } from '@/ai/flows/summarize-text';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,15 +55,31 @@ export function PageSummarizer({ initialUrl }: { initialUrl?: string | null }) {
       setError(null);
       setCurrentLength('medium');
       try {
-        // Use the summarizeText flow but instruct it to summarize the content AT the URL.
-        const result = await summarizeText({ text: `Please go to the URL ${data.url} and provide a summary of its content.` });
+        // This is a simplified approach for demonstration.
+        // A robust solution would involve fetching the content of the URL on the server-side.
+        const response = await fetch('/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: `Please go to the URL ${data.url} and provide a summary of its content.` }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.details || `Request failed with status ${response.status}`);
+        }
+        
+        const result = await response.json();
+
+        if (result.error) {
+           throw new Error(result.details || result.error);
+        }
         
         setOriginalText(result.summary); // The initial summary is the "original text" for length adjustments
         setSummary(result.summary);
       } catch (e) {
         console.error(e);
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-        setError('Failed to summarize the web page. Please check the URL and try again.');
+        setError(`Failed to summarize the web page. ${errorMessage}`);
         toast({
           variant: 'destructive',
           title: 'An error occurred',

@@ -4,6 +4,17 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  // Add a check for the API key, which is a common issue in production.
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json(
+      { 
+        error: 'Missing API Key', 
+        details: 'The GEMINI_API_KEY environment variable is not set on the server.' 
+      }, 
+      { status: 500 }
+    );
+  }
+
   const { text } = await request.json();
 
   if (!text) {
